@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}Enter 3 Values{% endblock %}
+
+{% block content %}
+<div class="container" style="display: flex;">
+    <div style="flex: 1; max-width: 45%;">
+        <h1>Enter Values</h1>
+        <div id="related-value-container" style="display: none; margin-bottom: 20px;">
+          
+            <div>
+                
+                <input type="text" id="related_value" readonly style="width: 100%; max-width: 300px;"><br>
+            </div>
+        </div>
+        <form method="POST">
+            <label for="value1">Value 1:</label>
+            <input type="text" id="value1" name="value1" value="{{ value1 or '' }}" required style="width: 100%; max-width: 300px;"><br>
+            {% if not value2 or not value3 %}
+            <label for="value2">Value 2:</label>
+            <input type="text" id="value2" name="value2" required style="width: 100%; max-width: 300px;"><br>
+            <label for="value3">Value 3:</label>
+            <input type="text" id="value3" name="value3" required style="width: 100%; max-width: 300px;"><br>
+            {% endif %}
+            <input type="submit" value="Submit">
+        </form>
+        {% if value2 and value3 %}
+        <h2>Related Values</h2>
+        <div>
+            <label for="related_value2">Value 2:</label>
+            <input type="text" id="related_value2" value="{{ value2 }}" readonly style="width: 100%; max-width: 300px;"><br>
+            <label for="related_value3">Value 3:</label>
+            <input type="text" id="related_value3" value="{{ value3 }}" readonly style="width: 100%; max-width: 300px;"><br>
+        </div>
+        {% endif %}
+    </div>
+    <div style="border-left: 2px solid #ccc; height: auto; margin: 0 20px;"></div>
+    <div style="flex: 1; max-width: 45%;">
+        <h2>Recent Entries</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>ED</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for entry in entries %}
+                <tr>
+                    <td>{{ entry }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.getElementById('value1').addEventListener('input', function() {
+        const value1 = this.value;
+        if (value1) {
+            fetch(`/get_related_value?value1=${value1}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.related_value !== null) {
+                        document.getElementById('related_value').value = data.related_value;
+                        document.getElementById('related-value-container').style.display = 'block';
+                    } else {
+                        document.getElementById('related-value-container').style.display = 'none';
+                    }
+                })
+                .catch(() => {
+                    document.getElementById('related-value-container').style.display = 'none';
+                });
+        } else {
+            document.getElementById('related-value-container').style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}
+
+
+
+

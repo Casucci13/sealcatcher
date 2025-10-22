@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Another Page{% endblock %}
+
+{% block content %}
+<html>
+
+    <title>Status Bar</title>
+<style>
+    #status-bar {
+    background-color: black;
+    padding: 10px;
+    margin-bottom: 20px;
+}
+#progress-bar {
+    width: 100%;
+    height: 30px;
+    background-color: #fbeec1;
+    border-radius: 5px;
+    overflow: hidden;
+}
+#progress-fill {
+    height: 100%;
+    
+    width: 0%;
+    transition: width 0.5s ease;
+}
+#status-text {
+    color: #fbeec1;
+    display: block;
+    text-align: center;
+    margin-top: 5px;
+}
+#pp {
+    color: orange;
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-weight: bold;
+}      
+</style>
+<div class="container">
+    <!-- Status Bar -->
+    <div id="status-bar">
+        <div id ="pp">Polling Places Packed</div>
+        <div id="progress-bar">
+            <div id="progress-fill"></div>
+        </div>
+        <span id="status-text"></span>
+        <div style="display: flex; justify-content: flex-end; margin-top: 0px;">
+            <button id="resetDatabaseButton">Reset Database</button>
+            <button id="downloadButton">Download Database</button>
+            </div>    
+    </div>
+       
+        
+   
+</div>
+    
+      
+    
+<script>
+    // ... (Your existing JavaScript code)
+    // Status Bar Animation
+    const progressBarFill = document.getElementById('progress-fill');
+    const percentage = {{ percentage }}; // Make sure 'percentage' is passed from Python
+    const uniquePadTags = {{ unique_pad_tag_count }};
+    const totalRows = {{ text_rows }};
+    progressBarFill.style.width = percentage + '%';
+    progressBarFill.style.background = `orange`;
+    progressBarFill.style.backgroundSize = `${percentage}% 100%`;
+    // Add animation for the stripes
+    progressBarFill.style.animation = 'stripeAnimation 2s linear infinite';
+    // CSS for the animation
+    const style = document.createElement('style');
+    style.innerHTML = `
+        @keyframes stripeAnimation {
+            0% { background-position: 0 0; }
+            100% { background-position: ${percentage}px 0; }
+        }
+    `;
+    document.head.appendChild(style);
+    // Update status text
+    const statusText = document.getElementById('status-text');
+    statusText.textContent = `${percentage.toFixed(2)}% (${uniquePadTags} out of ${totalRows} Polling Places)`;
+
+
+    const resetDatabaseButton = document.getElementById('resetDatabaseButton');
+    const downloadButton = document.getElementById('downloadButton');
+    const downloadLink = document.createElement('a'); // Create a hidden anchor tag
+    downloadLink.style.display = 'none'; // Hide the anchor tag
+    downloadButton.addEventListener('click', () => {
+        // Download the file
+        downloadLink.href = '/download_data'; // Replace with your download endpoint
+        downloadLink.download = 'dataPP.xlsx'; 
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+    });
+    resetDatabaseButton.addEventListener('click', () => {
+        if (confirm('Are you sure you want to reset the database?')) {
+            // Download the file
+            downloadLink.href = '/download_data'; // Replace with your download endpoint
+            downloadLink.download = 'dataPP.xlsx'; 
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            // Wait for download to complete (you might need to adjust the timeout)
+            setTimeout(() => {
+                // Reset the database
+                fetch('/reset_database') // Add reset_database route in Python
+                    .then(response => {
+                        if (response.ok) {
+                            alert('Database was successfully reset!');
+                            window.location.href = '/'; // Redirect to home.html
+                        } else {
+                            console.error('Error resetting database:', response.status);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                    });
+            }, 1000); // Wait for 1 second (adjust as needed)
+        }
+    }); 
+</script>
+</html>
+<div class="container">
+    <h1>Last 20 Entries</h1>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Bag Tag</th>
+                <th>TWD</th>
+                <th>Polling Place </th>
+                <th>Lookup Case #</th>
+                <th>Lookup Pad #</th>
+                <th>Cradle Point Serial Number</th>
+
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in data_entries %}
+            <tr>
+                <td>{{ row[0] }}</td>
+                <td>{{ row[1] }}</td>
+                <td>{{ row[2] }}</td>
+                <td>{{ row[3] }}</td>
+                <td>{{ row[4] }}</td>
+                <td>{{ row[5] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+    
+</div>
+{% endblock %}
+

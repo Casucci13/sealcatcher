@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Application{% endblock %}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            /*background-color: blue; */
+            margin: 0;
+            padding: 0;
+            background-image: url("/static/logoGold.png"); /* Replace with the actual path to             your image */    color: orange;
+            background-size: cover; /* Cover the entire screen */
+            background-repeat: no-repeat; /* Prevent the image from repeating */
+            background-attachment: fixed; /* Make the background fixed so it doesn't scroll */
+            background-blend-mode: multiply; /* Blend the background image with the content */
+            
+        }
+        .navbar {
+            background-color: black;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+           
+        }
+        .navbar img {
+            height: 80px;
+            
+            cursor: pointer; /* Add cursor pointer for clickable behavior */
+            padding: 5px 5px;
+        }
+        .navbar a {
+            color: #fbeec1;
+            text-align: center;
+            padding: 5px 5px;
+            text-decoration: none;
+            font-weight: bold;
+            margin-right: 30px;
+        }
+        .navbar a:hover {
+            background-color: orange;
+            color: black;
+            font-weight: bold;
+        }
+        .navbar img:hover {
+            background-color: orange;
+            color: black;
+            font-weight: bold;
+        }
+        .navbar .active {
+            color: black;
+            background-color: orange; /* Highlight color */
+            font-weight: bold;
+            padding: 5px 5px;
+        }
+        .container {
+            margin: 20px;
+        }
+        h1, h2 {
+            color: white;
+        }
+        table, th, td {
+            border-collapse: collapse;
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: black;
+            color:White;
+        }
+        tr:nth-child(odd) {
+             background-color: rgba(255,150,0, 0.3);
+             color: white;
+        }
+        tr:nth-child(even) {
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+        }
+        tr:hover {
+            color: black;
+            background-color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="navbar">
+       
+       <a href="{{ url_for('home') }}" {% if request.path == url_for('home') %}class="active"{% endif %}>
+            <img src="{{ url_for('static', filename='logoGold.png') }}" alt="Logo"> 
+       </a>
+         <a href="{{ url_for('home') }}" {% if request.path == url_for('home') %}class="active"{% endif %}>
+            Home
+       </a>
+        <a href="{{ url_for('search_and_select') }}" {% if request.path == url_for('search_and_select') %}class="active"{% endif %}>Ipad Check</a>
+        <a href="{{ url_for('enter_values') }}" {% if request.path == url_for('enter_values') %}class="active"{% endif %}>Enter 3 Values</a>
+        <a href="{{ url_for('another_page') }}" {% if request.path == url_for('another_page') %}class="active"{% endif %}>Data and Reports</a>
+    
+    </div>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
+
+
