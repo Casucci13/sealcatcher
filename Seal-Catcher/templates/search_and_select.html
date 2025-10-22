@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Enter Pad Bag Tag Number{% endblock %} 
+
+{% block content %}
+<div class="container" style="display: flex;">
+    <div style="flex: 1;">
+         
+       <!--  <h1 style="color: blue; font-weight: bold; font-size: 24px;">Enter Pad Bag Tag Number</h1> -->
+        <div>
+            <label for="pad_tag" style="font-weight: bold;">Pad Tag #:</label>
+            <input type="text" id="pad_tag" name="pad_tag" required autofocus>
+            <button type="button" id="clear_button" style="margin-left: 10px;">Clear</button>
+            <div id="tag_description" style="display: none; margin-top: 10px;"></div>
+            <div id="results_container">
+                <ul id="results" style="color: red; margin-top: 20px; display: flex; flex-wrap: wrap;">
+                    <!-- List items will be added here dynamically -->
+                 
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div style="flex: 1; margin-left: 30px;">
+        <form id="select_form" method="POST" action="/submit_data">
+            <input type="hidden" id="search_value" name="search_value">
+            <label for="value_input" style="font-weight: bold;">Enter TWD:</label><br>
+            <div id="form_inputs"></div>
+            <div id="additional_inputs" style="display: none; margin-top: 20px;">
+                <label for="case_number" style="font-weight: bold;">Case #:</label><br>
+                <input type="text" id="case_number" name="case_number" placeholder="Case #" onkeypress="return goToNextInput(event, 'ipad_number')"><br>
+                <label for="ipad_number" style="font-weight: bold;">Ipad #:</label><br>
+                <input type="text" id="ipad_number" name="ipad_number" placeholder="Ipad #" onkeypress="return goToNextInput(event, 'cradle_point_serial')"><br>
+                <label for="cradle_point_serial" style="font-weight: bold;">Cradle Point Serial #:</label><br>
+                <input type="text" id="cradle_point_serial" name="cradle_point_serial" placeholder="Cradle Point Serial #" onkeypress="return validateInputsOnEnter(event)"><br>
+            </div>
+            <button type="submit" style="display: none;" id="submit_button">Pack</button>
+          
+        </form>
+    </div>
+</div>
+
+<style>
+    #submit_button {
+        background-color: blue;
+        color: white;
+        font-weight: bold;
+        width: 100%;
+        padding: 10px;
+        font-size: 18px;
+        margin-top: 20px;
+        border: none;
+        cursor: pointer;
+    }
+</style>
+
+<script>
+    document.getElementById('pad_tag').addEventListener('keypress', function(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const padTag = this.value;
+            if (padTag) {
+                fetch(`/search?search_value=${padTag}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        const resultsContainer = document.getElementById('results');
+                        const tagDescriptionContainer = document.getElementById('tag_description');
+                        const formInputsContainer = document.getElementById('form_inputs');
+                        const additionalInputsContainer = document.getElementById('additional_inputs');
+                        resultsContainer.innerHTML = '';
+                        formInputsContainer.innerHTML = '';
+
+                        if (data.tag_description) {
+                            tagDescriptionContainer.textContent = `Polling Place: ${data.tag_description}`;
+                            
+                            tagDescriptionContainer.style.color = 'Green';
+                            tagDescriptionContainer.style.backgroundColor = 'black';
+                            tagDescriptionContainer.style.fontWeight = 'bold';
+                            tagDescriptionContainer.style.display = 'block';
+                        } else {
+                            tagDescriptionContainer.style.display = 'none';
+                        }
+
+                        // Add Lookup Pad item
+                        const lookupPadItem = document.createElement('li');
+                        lookupPadItem.textContent = 'Lookup Pad';
+                        lookupPadItem.id = 'lookup_pad';
+                        lookupPadItem.style.width = '45%';
+                        lookupPadItem.style.color = 'red';
+                        resultsContainer.style.backgroundColor = 'black';
+                        resultsContainer.appendChild(lookupPadItem);
+
+                        if (data.results.length > 0) {
+                            data.results.forEach((result, index) => {
+                                const listItem = document.createElement('li');
+                                listItem.textContent = result;
+                                listItem.id = `result_${index}`;
+                                listItem.style.width = '45%';
+                                resultsContainer.appendChild(listItem);
+
+                                const inputDiv = document.createElement('div');
+                                inputDiv.style.position = 'relative';
+
+                                const input = document.createElement('input');
+                                input.type = 'text';
+                                input.name = 'ED';
+                                input.required = true;
+                                input.placeholder = 'Enter TWD';
+                                input.style.width = '100%';
+                                input.style.marginBottom = '5px';
+                                input.addEventListener('input', function() {
+                                    validateInputs();
+                                });
+
+                                input.addEventListener('keypress', function(event) {
+                                    if (event.key === 'Enter') {
+                                        event.preventDefault();
+                                        const nextInput = this.parentElement.nextElementSibling?.querySelector('input');
+                                        if (nextInput) {
+                                            nextInput.focus();
+                                        } else {
+                                            document.getElementById('case_number').focus();
+                                        }
+                                    }
+                                });
+
+                                inputDiv.appendChild(input);
+                                formInputsContainer.appendChild(inputDiv);
+                            });
+
+                            document.getElementById('search_value').value = padTag;
+                            additionalInputsContainer.style.display = 'block';
+                            formInputsContainer.firstChild.querySelector('input').focus();
+                        } else {
+                            resultsContainer.innerHTML = '<li>No matching results found</li>';
+                            additionalInputsContainer.style.display = 'none';
+                        }
+                    });
+            }
+        }
+    });
+
+    function validateInputs() {
+        const inputs = document.querySelectorAll('#form_inputs input');
+        const results = document.querySelectorAll('#results li');
+        const caseNumber = document.getElementById('case_number').value;
+        const ipadNumber = document.getElementById('ipad_number').value;
+        const cradlePointSerial = document.getElementById('cradle_point_serial').value;
+        let allGreen = true;
+        let allUnique = true;
+
+        // Reset styles
+        inputs.forEach(input => {
+            input.style.backgroundColor = 'white';
+            const errorSpan = input.nextElementSibling;
+            if (errorSpan) errorSpan.remove();
+        });
+
+        results.forEach(result => {
+            if (result.id !== 'lookup_pad') {
+                result.style.color = 'red';
+            }
+        });
+
+        // Validate uniqueness and matching with list
+        inputs.forEach(input => {
+            let match = false;
+            let unique = true;
+            const value = input.value;
+
+            // Check for duplicates
+            inputs.forEach(otherInput => {
+                if (input !== otherInput && input.value && input.value === otherInput.value) {
+                    unique = false;
+                }
+            });
+
+            // Highlight if not unique
+            if (!unique) {
+                input.style.backgroundColor = 'red';
+                const errorSpan = document.createElement('span');
+                errorSpan.textContent = '!';
+                errorSpan.className = 'error-span';
+                errorSpan.style.color = 'red';
+                errorSpan.style.position = 'absolute';
+                errorSpan.style.right = '5px';
+                input.parentElement.appendChild(errorSpan);
+                allUnique = false;
+            }
+
+            // Check for match with results
+            results.forEach((result, i) => {
+                if (value === result.textContent) {
+                    result.style.color = 'green';
+                    match = true;
+                }
+            });
+
+            // Highlight if no match
+            if (value && !match) {
+                input.style.backgroundColor = 'red';
+                const errorSpan = document.createElement('span');
+                errorSpan.textContent = '!';
+                errorSpan.className = 'error-span';
+                errorSpan.style.color = 'red';
+                errorSpan.style.position = 'absolute';
+                errorSpan.style.right = '5px';
+                input.parentElement.appendChild(errorSpan);
+            }
+
+            if (!match) {
+                allGreen = false;
+            }
+        });
+
+        // Validate Lookup Pad item
+        const lookupPadItem = document.getElementById('lookup_pad');
+        if (caseNumber && ipadNumber && cradlePointSerial) {
+            lookupPadItem.style.color = 'green';
+        } else {
+            lookupPadItem.style.color = 'red';
+            allGreen = false;
+        }
+
+        // Validate additional inputs
+        const additionalInputs = document.querySelectorAll('#case_number, #ipad_number, #cradle_point_serial');
+        additionalInputs.forEach(input => {
+            if (input.value === '') {
+                allGreen = false;
+            }
+        });
+
+        document.getElementById('submit_button').style.display = allGreen && allUnique ? 'block' : 'none';
+    }
+
+    function goToNextInput(event, nextInputId) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            const nextInput = document.getElementById(nextInputId);
+            if (nextInput) {
+                nextInput.focus();
+            }
+        }
+    }
+
+    function validateInputsOnEnter(event) {
+        if (event.key === 'Enter') {
+            event.preventDefault();
+            validateInputs();
+        }
+    }
+
+    document.getElementById('clear_button').addEventListener('click', function() {
+        document.getElementById('select_form').reset();
+        const inputs = document.querySelectorAll('#form_inputs input');
+        const results = document.querySelectorAll('#results li');
+        inputs.forEach(input => {
+            input.style.backgroundColor = 'white';
+            const errorSpan = input.nextElementSibling;
+            if (errorSpan) errorSpan.remove();
+        });
+        results.forEach(result => {
+            result.style.color = 'red';
+        });
+        document.getElementById('submit_button').style.display = 'none';
+        document.getElementById('additional_inputs').style.display = 'none';
+        document.getElementById('tag_description').style.display = 'none';
+        document.getElementById('pad_tag').value = '';
+        document.getElementById('pad_tag').focus();
+    });
+
+    document.getElementById('pad_tag').focus();
+   
+</script>
+{% endblock %}
+
+
+
+
+
+
+
+
+
+
+
+
